@@ -26,8 +26,9 @@ class Eneco:
           ...
           }
 
+        2023-07-13:  apikey is now FE_DC_API_KEY from window.__ENV in https://www.eneco.nl/mijn-eneco/
         """
-        self.apikey = "dbf449cfdcf04a3d8913f4e7a2b297d3"
+        self.apikey = "41ff1058fc7f4446b80db84e8857c347"
         self.auth = None
         self.baseurl = "https://api-digital.enecogroup.com"
         self.customerid = None
@@ -121,13 +122,16 @@ class Eneco:
 
 see exhar/eu1static.oktacdn.com/assets/js/sdk/okta-signin-widget/6.4.3/js/okta-sign-in.min-1.js
         """
-        html = self.httpreq("https://www.eneco.nl/mijn-eneco/")
+        # html = self.httpreq("https://www.eneco.nl/mijn-eneco/")
+        #  (20221223) -> now redirects to /identity/login/website_eneco_main/OktaNL?returnUrl=/mijn-eneco/
+        html = self.httpreq("https://mijn.eneco.nl/")
         # -> redir to /login?returnUrl=...
         # -> redir to https://inloggen.eneco.nl/oauth2
         # extract 'oktaData' -> signIn -> stateToken
         token = self.extractToken(html)
         if not token:
-            print("WARNING: failed to get token")
+            print("WARNING: failed to get token from mijn.eneco.nl main page")
+            print(html)
             return
 
         # note: optional steps:  introspect  and device/nonce
@@ -180,6 +184,7 @@ see exhar/eu1static.oktacdn.com/assets/js/sdk/okta-signin-widget/6.4.3/js/okta-s
         return True
 
         """
+        note: 2023-07-13  /v1/enecoweb/v2 was changed to /dxpweb/nl
         /v1/enecoweb/eneco/customers/
         /v1/enecoweb/eneco/customers/<CUSTID>/preferences/contact
         /v1/enecoweb/eneco/customers/<MYNUM>/accounts/<CUSTID>/usages/monthSummary?year=<YEAR>&month=<MONTH>
@@ -199,11 +204,11 @@ see exhar/eu1static.oktacdn.com/assets/js/sdk/okta-signin-widget/6.4.3/js/okta-s
         """
 
     def getprofile(self):
-        return self.httpreq(f"{self.baseurl}/v1/enecoweb/eneco/customers/{self.customerid}/profile")
+        return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/profile")
     def getinsights(self):
-        return self.httpreq(f"{self.baseurl}/v1/enecoweb/v2/eneco/customers/{self.customerid}/accounts/2/usages/services/insights")
+        return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/accounts/2/usages/services/insights")
     def getproducts(self):
-        return self.httpreq(f"{self.baseurl}/v1/enecoweb/eneco/customers/{self.customerid}/accounts/2/products?includeproductrates=true")
+        return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/accounts/2/products?includeproductrates=true")
     def getusage(self, start, per="Day", interval="Hour"):
         """
         This will return a json dict with data for 7 days from 'start'
@@ -274,7 +279,7 @@ each measurement has this:
             addWeather = True,
             extrapolate = False
         )
-        return self.httpreq(f"{self.baseurl}/v1/enecoweb/v2/eneco/customers/{self.customerid}/accounts/2/usages?"+urllib.parse.urlencode(q))
+        return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/accounts/2/usages?"+urllib.parse.urlencode(q))
 
 def loadconfig(cfgfile):
     """
@@ -306,7 +311,7 @@ def decode_datetime(t):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='per uur gegevens van de mijn-eneco gebruiksgegevens')
-    parser.add_argument('--debug', '-d', action='store_true', help='print all intermediate steps')
+    parser.add_argument('--debug', '-d', action='store_true', help=argparse.SUPPRESS) # 'print all intermediate steps'
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--profile', action='store_true', help='print gebruikers profiel')
     parser.add_argument('--insights', action='store_true', help='print insights gegevens')
@@ -315,9 +320,9 @@ def main():
     parser.add_argument('--since', '--from', type=str, help='get usage from', metavar='DATE')
     parser.add_argument('--until', type=str, help='get usage until, default=now', metavar='DATE')
     parser.add_argument('--weeks', '-w', type=int, default=0, help='hoeveel weken')
-    parser.add_argument('--username', '-u', type=str)
-    parser.add_argument('--password', '-p', type=str)
-    parser.add_argument('--config', help='specify configuration file.', default='~/.energierc')
+    parser.add_argument('--username', '-u', type=str, help=argparse.SUPPRESS)
+    parser.add_argument('--password', '-p', type=str, help=argparse.SUPPRESS)
+    parser.add_argument('--config', help=argparse.SUPPRESS, default='~/.energierc') # 'specify configuration file.'
     args = parser.parse_args()
 
     if args.config.startswith("~/"):
@@ -340,12 +345,15 @@ def main():
     if args.profile:
         j = en.getprofile()
         print(json.dumps(j))
-    if args.insights:
+        return
+    elif args.insights:
         j = en.getinsights()
         print(json.dumps(j))
-    if args.products:
+        return
+    elif args.products:
         j = en.getproducts()
         print(json.dumps(j))
+        return
 
     t0 = None
     t1 = datetime.now()
