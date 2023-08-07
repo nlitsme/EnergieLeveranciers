@@ -145,10 +145,14 @@ def main():
     e_per = defaultdict(float)
     g_per = defaultdict(float)
 
+    done = set()
     with open(args.filename, "r") as fh:
         for d in getdata(readlines(fh)):
             isok = check(d)
             t = cvdate(get(d, 'date'))
+            if t in done:
+                continue
+            done.add(t)
             g = get(d, 'gas', 'high')
             e = get(d, 'electricity', 'high') or get(d, 'electricity', 'low')
             g_err = get(d, 'gas', 'errorCodes')
