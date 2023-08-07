@@ -26,12 +26,12 @@ class Vattenfall:
         # f5406a12dbdd41a2ad8e0de5a69d9e00  ocpApimSubscriptionBaseKey: apiBaseUrl: "https://api.vattenfall.nl/api/mijnnuonprd/v2",
 
         self.apikey = "f5406a12dbdd41a2ad8e0de5a69d9e00"
-        self.auth = None
+        self.auth = args.auth
         # apiBaseUrl: "https://api.vattenfall.nl/api/mijnnuonprd/v2",
         self.baseurl = "https://api.vattenfall.nl/api/mijnnuonprd/v2"
 
         # customer_id / ?
-        self.customerid = None
+        self.customerid = args.customerid
 
         handlers = []
         if args.debug:
@@ -82,7 +82,24 @@ class Vattenfall:
             self.logprint(data)
             self.logprint()
             return data
-    def getusage(self, tstart, tend):
+    def login(self, username, password):
+        captchatoken = ""  # TODO: get this from browser.
+        q = {
+	'email': username,
+	'password': password,
+	'sessionDataKey': sessiondatakey,
+	'requestDevice': 'Firefox:desktop:GNU/Linux',
+	'captchaToken': captchatoken,
+	'tenantDomain': 'nl.b2c.customers',
+        }
+        self.httpreq('https://accounts.vattenfall.nl/iamng/nlb2c-revamp/commonauth', urllib.parse.urlencode(q))
+        # "redirect": "https://accounts.vattenfall.nl/iamng/nlb2c-revamp/oauth2/authorize?sessionDataKey=..."
+        #  -> wrong credentials.
+
+        # https://api.vattenfall.nl/chatbot-api/session/start
+        #   json: sessionId
+
+    def getusage(self, tstart, tend, interval):
         """
         NOTE: tend is inclusive
         """
@@ -90,7 +107,7 @@ class Vattenfall:
         end = f"{tend:%Y-%m-%d}"
         q = dict(
                 # 5 = uur, 6 = jaar, 1 = maand, 3 = ?dag?
-            Interval = 5,
+            Interval = interval,
             GetAggregatedResults = False,
             GetAmountDetails = False,
             GetAmounts = True,
@@ -98,7 +115,7 @@ class Vattenfall:
             GetComparedConsumption = False,
             DateFrom = start,
             DateTo = end)
-        return self.httpreq(f"{self.baseurl}/consumptions/consumptions/{self.customerid}/5/?"+urllib.parse.urlencode(q))
+        return self.httpreq(f"{self.baseurl}/consumptions/consumptions/{self.customerid}/{interval}/?"+urllib.parse.urlencode(q))
 
 
 def decode_datetime(t):
@@ -141,6 +158,10 @@ def main():
     parser.add_argument('--profile', action='store_true')
     parser.add_argument('--insights', action='store_true')
     parser.add_argument('--products', action='store_true')
+    parser.add_argument('--peruur', action='store_true')
+    parser.add_argument('--perdag', action='store_true')
+    parser.add_argument('--permaand', action='store_true')
+    parser.add_argument('--perjaar', action='store_true')
     parser.add_argument('--since', '--from', type=str, help='get usage from')
     parser.add_argument('--until', type=str, help='get usage until, default=now')
     parser.add_argument('--weeks', '-n', type=int, default=0)
@@ -148,7 +169,7 @@ def main():
     parser.add_argument('--password', '-p', type=str)
     parser.add_argument('--auth', type=str)
     parser.add_argument('--customerid', type=str)
-    parser.add_argument('--config', help='specify configuration file.', default='~/.enecorc')
+    parser.add_argument('--config', help='specify configuration file.', default='~/.energierc')
     args = parser.parse_args()
 
     if args.config.startswith("~/"):
@@ -175,6 +196,13 @@ def main():
     t0 = None
     t1 = datetime.now()
     td = timedelta(days=7)
+    if args.peruur:
+        td = timedelta(days=7)
+    elif args.perdag:
+        td = timedelta(days=31)
+    elif args.permaand:
+        td = timedelta(days=366)
+
     if args.since:
         t0 = decode_datetime(args.since)
     if args.until:
@@ -187,12 +215,22 @@ def main():
     if t0 is None:
         t0 = t1 - td*args.weeks
 
+    interval = 5
+    if args.peruur:
+        interval = 5
+    elif args.perdag:
+        interval = 3
+    elif args.permaand:
+        interval = 1
+    elif args.perjaar:
+        interval = 6
+
     if t0==t1:
         print("nothing to do, specify nr of weeks(-w), or --from + --until")
         return
     t = t0
     while t < t1:
-        j = en.getusage(t, t+timedelta(days=6))
+        j = en.getusage(t, t+td-timedelta(days=1), interval)
         print(json.dumps(j))
         t += td
 
