@@ -28,12 +28,14 @@ class Eneco:
 
         2023-07-13:  apikey is now FE_DC_API_KEY from window.__ENV in https://www.eneco.nl/mijn-eneco/
         """
-        self.apikey = "41ff1058fc7f4446b80db84e8857c347"
+        self.apikey = "41ff1058fc7f4446b80db84e8857c347"      # from FE_DC_API_KEY 
         self.auth = None
-        self.baseurl = "https://api-digital.enecogroup.com"
+        self.baseurl = "https://api-digital.enecogroup.com"   # from FE_DC_HOST
         self.customerid = None
+        self.accountid = None
 
-        handlers = []
+        self.cj = http.cookiejar.CookieJar()
+        handlers = [urllib.request.HTTPCookieProcessor(self.cj)]
         if args.debug:
             handlers.append(urllib.request.HTTPSHandler(debuglevel=1))
         self.opener = urllib.request.build_opener(*handlers)
@@ -53,7 +55,10 @@ class Eneco:
         hdrs = { }
         if data and type(data)==str:
             data = data.encode('utf-8')
-        hdrs["Content-Type"] = "application/json"
+        if data and data[:1] in (b"{",b"["):
+            hdrs["Content-Type"] = "application/json"
+        elif data:
+            hdrs["Content-Type"] = "application/x-www-form-urlencoded"
         if self.apikey:
             hdrs["apikey"] = self.apikey
         if self.auth:
@@ -73,7 +78,7 @@ class Eneco:
                 data = response.read()
             except http.client.IncompleteRead as e:
                 continue
-            if response.headers.get("content-type", '').find("application/json")>=0:
+            if re.search(r'application\S+json', response.headers.get("content-type", '')):
                 js = json.loads(data)
                 self.logprint(js)
                 self.logprint()
@@ -122,9 +127,34 @@ class Eneco:
 
 see exhar/eu1static.oktacdn.com/assets/js/sdk/okta-signin-widget/6.4.3/js/okta-sign-in.min-1.js
         """
+        # NEW:
+        #   https://www.eneco.nl/api/auth/csrf -> { csrfToken }
+        #   https://www.eneco.nl/api/auth/signin/okta
+        #    POST json=true csrfToken=<>  callbackUrl=<>
+        #   -> url: inloggen...
+        #   inloggen... url -> html
+        # extract 'oktaData' -> signIn -> stateToken
+
+        html = self.httpreq("https://www.eneco.nl/mijn-eneco/")
+        #  ignore content ... gets cookies
+
+        csrfjson = self.httpreq("https://www.eneco.nl/api/auth/csrf/")
+        self.csrftoken = csrfjson.get('csrfToken')
+
+        # todo https://www.eneco.nl/api/auth/providers
+        #   -> okta.signinUrl
+        
+        oktareq = {
+                "json":'true',
+                "csrfToken": self.csrftoken,
+                "callbackUrl": "/mijn-eneco/",
+        }
+        authjson = self.httpreq("https://www.eneco.nl/api/auth/signin/okta/", data = urllib.parse.urlencode(oktareq))
+        html = self.httpreq(authjson.get('url'))
+
         # html = self.httpreq("https://www.eneco.nl/mijn-eneco/")
         #  (20221223) -> now redirects to /identity/login/website_eneco_main/OktaNL?returnUrl=/mijn-eneco/
-        html = self.httpreq("https://mijn.eneco.nl/")
+        # html = self.httpreq("https://mijn.eneco.nl/")
         # -> redir to /login?returnUrl=...
         # -> redir to https://inloggen.eneco.nl/oauth2
         # extract 'oktaData' -> signIn -> stateToken
@@ -134,52 +164,45 @@ see exhar/eu1static.oktacdn.com/assets/js/sdk/okta-signin-widget/6.4.3/js/okta-s
             print(html)
             return
 
-        # note: optional steps:  introspect  and device/nonce
 
-        # NOTE: when passing a null stateToken to 'authn', you get a sessionToken from 'password/verify'  instead of the step-up redirect.
-        auth1 = self.httpreq("https://inloggen.eneco.nl/api/v1/authn", json.dumps( {"username":username,"options":{"warnBeforePasswordExpired":True,"multiOptionalFactorEnroll":True},"stateToken":token}))
-        if self.args.verbose:
-            self.dump_auth_status(auth1)
-        # check if status == UNAUTHENTICATED
-        if auth1.get('status') != 'UNAUTHENTICATED':
+        state = self.httpreq("https://inloggen.eneco.nl/idp/idx/introspect", data=json.dumps({"stateToken":token}))
+        while True:
+            if 'success' in state:
+                break
+            if 'remediation' not in state:
+                break
+            values = state.get('remediation',{}).get('value', [])
+            for form in values:
+                if form.get('name') == "challenge-authenticator":
+                    break
+            post = {}
+            for v in form.get('value', []):
+                value = None
+                if 'value' in v:
+                    value = v.get('value')
+                else:
+                    match v.get('name'):
+                        case 'identifier': value = username
+                        case 'credentials': value = {"passcode":password}
+                if not value:
+                    print("could not determine", v)
+                    return
+                post[v.get('name')] = value
+            state = self.httpreq(form.get('href'), data=json.dumps(post))
+
+
+        # ...
+        successhref = state.get('success',{}).get('href')
+        if not successhref:
+            print("failed")
             return
-        # todo: _embedded.factors.[0]._links.verify.href
-        #     and factorType == password
-        #   when MFA_REQUIRED -> return
-
-        auth2 = self.httpreq("https://inloggen.eneco.nl/api/v1/authn/factors/password/verify?rememberDevice=false", json.dumps( {"password":password,"stateToken":token}))
-        if self.args.verbose:
-            self.dump_auth_status(auth2)
-        if auth2.get('status') == 'MFA_REQUIRED':
-            if self.args.noninteractive:
-                raise Exception("MFA_REQUIRED")
-            factors = auth2.get("_embedded", {}).get("factors", [])
-            auth3 = self.httpreq(factors.pop().get("_links").get("verify").get("href"), json.dumps({"passCode":"", "stateToken":token}))
-            if self.args.verbose:
-                self.dump_auth_status(auth3)
-            code = input("Check your mail, enter MFA code:")
-            auth2 = self.httpreq(auth3.get("_links").get("next").get("href"), json.dumps({"passCode":code, "stateToken":token}))
-            if self.args.verbose:
-                self.dump_auth_status(auth2)
-        # check if status == SUCCESS
-        if auth2.get('status') != 'SUCCESS':
-            return
-
-        #  get _links.next.href
-
-        html2 = self.httpreq(f"https://inloggen.eneco.nl/login/step-up/redirect?stateToken={token}")
-
-        self.auth = self.extractIdToken(html2)
-        if not self.auth:
-            print("WARNING: failed to get id-token")
-            return
-
-        # customerId is embedded in the token 
-        self.customerid = self.extractCustomerIdFromToken(self.auth)
-
-        # alternative: extract form in order to get customer-id
-        #ehtml = self.httpreq("https://www.eneco.nl/mijn-eneco/")
-        #self.customerid = self.extractCustomerId(ehtml)
+        html2 = self.httpreq(successhref)
+        if m := re.search(r'"idToken":"(.*?)"', html2.decode()):
+            self.auth = "Bearer " + m[1]
+        if m := re.search(r'"customerId":(\d+)', html2.decode()):
+            self.customerid = int(m[1])
+        if m := re.search(r'"accountId":(\d+)', html2.decode()):
+            self.accountid = int(m[1])
 
         return True
 
@@ -204,11 +227,11 @@ see exhar/eu1static.oktacdn.com/assets/js/sdk/okta-signin-widget/6.4.3/js/okta-s
         """
 
     def getprofile(self):
-        return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/profile")
+        return self.httpreq(f"{self.baseurl}/dxpweb/v2/nl/eneco/customers/{self.customerid}/profile")
     def getinsights(self):
-        return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/accounts/2/usages/services/insights")
+        return self.httpreq(f"{self.baseurl}/dxpweb/v2/nl/eneco/customers/{self.customerid}/accounts/{self.accountid}/usages/services/insights")
     def getproducts(self):
-        return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/accounts/2/products?includeproductrates=true")
+        return self.httpreq(f"{self.baseurl}/dxpweb/v2/nl/eneco/customers/{self.customerid}/accounts/{self.accountid}/products?includeproductrates=true")
     def getusage(self, start, per="Day", interval="Hour"):
         """
         This will return a json dict with data for 7 days from 'start'
@@ -272,14 +295,14 @@ each measurement has this:
 }
         """
         q = dict(
-            aggregation = per,
-            interval = interval,
-            start = start,
+            aggregation = per,    # Day, Week, Month, Year
+            interval = interval,  # Hour, Day, Week, Month, Year
+            start = start,        # yyyy-mm-dd
             addBudget = True,
             addWeather = True,
             extrapolate = False
         )
-        return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/accounts/2/usages?"+urllib.parse.urlencode(q))
+        return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/accounts/{self.accountid}/usages?"+urllib.parse.urlencode(q))
 
 def loadconfig(cfgfile):
     """
