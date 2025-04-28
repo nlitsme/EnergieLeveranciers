@@ -74,7 +74,9 @@ def getdata(lines):
 def fixdate(d):
     if len(d)==10:
         return d+"T00:00:00"
-    else:
+    elif len(d)==19:
+        return d
+    elif len(d)==20:
         return d[:-1]
 
 def cvdate(d):
@@ -92,6 +94,8 @@ def enecojaar(t):
     return "2022"
 
 def checkmeasurement(m, dbl):
+    if not m:
+        return False
     if m.get('status') != 'MEASURED':
         return False
     if not (m.get('isDoubleTariff') == m.get('isDoubleMeter') == dbl):
@@ -119,12 +123,10 @@ def measurementdeviations(which, m, dbl):
 
 def deviations(d):
     l = []
-    for _ in ('warmth', 'redelivery', 'produced', 'tapWater'):
-        if d.get(_):
-            l.append(f"warmth={d.get(_)}")
-
-    l += measurementdeviations('gas', d.get('gas'), False)
-    l += measurementdeviations('electricity', d.get('electricity'), True)
+    for typ in ('warmth', 'redelivery', 'produced', 'tapWater', 'gas', 'electricity'):
+        if v := d.get(typ):
+            l.append(f"{typ}={v}")
+            l += measurementdeviations(typ, v, dbl=(typ!='gas'))
 
     return ", ".join(l)
 
@@ -139,11 +141,12 @@ def main():
     parser.add_argument('--peryear', '-y', action='store_true')
     parser.add_argument('--eneco', '-e', action='store_true')
     parser.add_argument('--columns', action='store_true')
+    parser.add_argument('--full', action='store_true', help='print full float values')
     parser.add_argument('filename', type=str)
     args = parser.parse_args()
 
-    e_per = defaultdict(float)
-    g_per = defaultdict(float)
+    per = defaultdict(lambda:defaultdict(float))
+    times = set()
 
     done = set()
     with open(args.filename, "r") as fh:
@@ -153,10 +156,13 @@ def main():
             if t in done:
                 continue
             done.add(t)
-            g = get(d, 'gas', 'high')
-            e = get(d, 'electricity', 'high') or get(d, 'electricity', 'low')
-            g_err = get(d, 'gas', 'errorCodes')
-            e_err = get(d, 'electricity', 'errorCodes')
+            values = dict()
+            errors = dict()
+            for typ in ('warmth', 'redelivery', 'produced', 'tapWater', 'gas', 'electricity'):
+                if v := get(d, typ, 'high') or get(d, typ, 'low'):
+                    values[typ] = v
+                if v := get(d, typ, 'errorCodes'):
+                    errors[typ] = v
 
             if args.perday:
                 tsum = f"{t:%Y-%m-%d}"
@@ -172,22 +178,25 @@ def main():
             else:
                 tsum = f"{t:%Y-%m-%d %H}"
                 if args.verbose:
-                    if not isok or g_err or e_err:
-                        print(f"{t:%Y-%m-%d %H:%M:%S} {g:>10.5f} {e:>10.5f}", end="")
+                    if not isok or errors:
+                        print(f"{t:%Y-%m-%d %H:%M:%S}", end="")
+                        for typ, v in sorted(values.items()):
+                            print(f"  {typ[:1]}:{v:7.4f}", end="")
                     if not isok:
                         print("*", end="")
                         print(deviations(d), end="")
-                    if g_err or e_err:
-                        print(f"  : g:{g_err}, e:{e_err}")
+                    if errors:
+                        print(f"  : {errors}")
                     elif not isok:
                         print()
 
             if tsum:
-                e_per[tsum] += e
-                g_per[tsum] += g
+                times.add(tsum)
+                for typ, v in values.items():
+                    per[typ][tsum] += v
 
     if args.columns:
-        for table in (g_per, e_per):
+        for typ, table in sorted(per.items()):
             dates = set(k[:10] for k in table.keys())
             print("--")
             print("       ", end="")
@@ -200,8 +209,14 @@ def main():
                     print("%8.3f" % table[f"{d} {h:02d}"], end=" ")
                 print()
     else:
-        for t in sorted(e_per.keys()):
-            print("%s %10.5f %10.5f" % (t, g_per[t], e_per[t]))
+        for t in sorted(times):
+            print(f"{t}", end="")
+            for typ, v in sorted(per.items()):
+                if args.full:
+                    print(f"  {typ[:1]}:{v[t]:>22}", end="")
+                else:
+                    print(f"  {typ[:1]}:{v[t]:7.4f}", end="")
+            print()
 
 if __name__=='__main__':
     main()
