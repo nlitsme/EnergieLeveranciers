@@ -1,0 +1,19 @@
+{
+  "min_capacity_kwh": 8.97,
+  "recommended_capacity_kwh": 8.97,
+  "max_capacity_kwh": 8.97,
+  "min_capacity_percentile": 0.05,
+  "recommended_capacity_percentile": 0.5,
+  "max_capacity_percentile": 0.95,
+  "annual_night_consumption_kwh": 2651.7,
+  "annual_savings_potential_eur": 583.0,
+  "battery_cost_eur": 5382.0,
+  "payback_years": 9.2,
+  "payback_years_lower": 4.6,
+  "payback_years_upper": 13.8,
+  "battery_cost_per_kwh": 600,
+  "energy_price_per_kwh": 0.3,
+  "feedin_tariff_per_kwh": 0.08,
+  "roundtrip_efficiency": 0.9,
+  "dod_limit": 0.9
+}

@@ -1,0 +1,107 @@
+# batterijberekening - Home Battery Sizing and Analysis
+# Configuration file
+
+# Energy provider configuration
+energy_provider:
+  # Provider: "eneco" or "vattenfall"
+  provider: "eneco"
+  
+  # Eneco configuration
+  eneco:
+    username: ""  # Set via ENECO_USERNAME env var
+    password: ""  # Set via ENECO_PASSWORD env var
+    api_key: "41ff1058fc7f4446b80db84e8857c347"  # From FE_DC_API_KEY
+    base_url: "https://api-digital.enecogroup.com"
+    customer_id: ""  # Set after login
+    account_id: ""   # Set after login
+  
+  # Vattenfall configuration
+  vattenfall:
+    auth_token: ""  # Set via VATTENFALL_AUTH_TOKEN env var
+    customer_id: ""  # Set via VATTENFALL_CUSTOMER_ID env var
+    api_key: "f5406a12dbdd41a2ad8e0de5a69d9e00"
+    base_url: "https://api.vattenfall.nl/api/mijnnuonprd/v2"
+
+# Timezone configuration
+timezone:
+  zone: "Europe/Amsterdam"
+
+# Data configuration
+data:
+  # Years of historical data to fetch
+  years_back: 2
+  # Directory for raw data cache
+  data_dir: "data/raw"
+  # Directory for processed data output
+  output_dir: "data/processed"
+  # Directory for output plots and reports
+  plots_dir: "output/plots"
+  # Directory for JSON exports
+  exports_dir: "output/exports"
+
+# Analysis configuration
+analysis:
+  # Solar production threshold (1% of daily max)
+  solar_threshold_pct: 0.01
+  # Hours to consider as "night" (no solar production)
+  # If None, uses threshold-based detection
+  night_hours: null
+  
+  # Months to analyze (None = all months)
+  months: null
+  
+  # Quantiles to compute
+  quantiles: [0.05, 0.25, 0.5, 0.75, 0.95]
+  
+  # Rolling window for smoothing (months)
+  smoothing_window: 3
+
+# Battery sizing configuration
+battery:
+  # Price assumptions (EUR/kWh)
+  battery_cost_per_kwh: 600  # EUR/kWh installed cost
+  # Energy price (EUR/kWh) - savings from self-consumption
+  energy_price_per_kwh: 0.30  # EUR/kWh
+  # Feed-in tariff (EUR/kWh) - what you get for exporting
+  feedin_tariff_per_kwh: 0.08  # EUR/kWh
+  # Round-trip efficiency
+  roundtrip_efficiency: 0.90
+  # Depth of discharge limit
+  dod_limit: 0.90
+  # Number of cycles per year (for degradation)
+  cycles_per_year: 365
+  
+  # Percentiles for sizing
+  min_capacity_percentile: 0.05
+  recommended_capacity_percentile: 0.50
+  max_capacity_percentile: 0.95
+
+# Plotting configuration
+plotting:
+  # Style
+  style: "whitegrid"
+  palette: "viridis"
+  # Figure size
+  figsize: [12, 8]
+  dpi: 150
+  # Font sizes
+  title_size: 16
+  label_size: 14
+  tick_size: 12
+  legend_size: 11
+  # Colors for quantile ribbon plot
+  median_color: "#2E86AB"
+  iqr_color: "#A23B72"
+  outer_color: "#F18F01"
+  # Interactive plot settings
+  interactive:
+    enabled: true
+    output_format: "html"
+
+# Logging configuration
+logging:
+  level: "INFO"
+  file: "logs/batterijberekening.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  max_bytes: 10485760  # 10MB
+  backup_count: 5

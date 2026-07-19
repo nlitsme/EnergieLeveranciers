@@ -1,0 +1,29 @@
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Configuration
+pyyaml>=6.0
+python-dotenv>=1.0.0
+
+# API clients
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+
+# Utilities
+python-dateutil>=2.8.2
+pytz>=2023.3
+tqdm>=4.65.0
+
+# Type hints
+typing-extensions>=4.7.0

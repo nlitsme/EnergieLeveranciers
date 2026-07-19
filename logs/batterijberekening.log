@@ -1,0 +1,295 @@
+2026-07-19 12:27:45,615 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 12:27:45,616 - __main__ - INFO - Building time series from raw data...
+2026-07-19 12:27:45,617 - batterijberekening.data.timeseries - INFO - Loading raw data from data/raw/raw_data.jsonl
+2026-07-19 12:27:45,618 - batterijberekening.data.timeseries - INFO - Loaded 0 raw data records from data/raw/raw_data.jsonl
+2026-07-19 12:27:45,618 - batterijberekening.data.timeseries - WARNING - No valid records found in Eneco data
+2026-07-19 12:27:45,619 - __main__ - ERROR - Error: Empty consumption or solar DataFrame
+2026-07-19 12:36:16,432 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 12:36:16,434 - __main__ - INFO - Building time series from raw data...
+2026-07-19 12:36:16,435 - batterijberekening.data.timeseries - INFO - Loading raw data from data/raw/raw_data.jsonl
+2026-07-19 12:36:16,435 - batterijberekening.data.timeseries - INFO - Loaded 0 raw data records from data/raw/raw_data.jsonl
+2026-07-19 12:36:16,435 - batterijberekening.data.timeseries - WARNING - No valid records found in Eneco data
+2026-07-19 12:36:16,436 - __main__ - ERROR - Error: Empty consumption or solar DataFrame
+2026-07-19 12:40:11,983 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 12:40:11,985 - __main__ - INFO - Building time series from raw data...
+2026-07-19 12:40:11,985 - batterijberekening.data.timeseries - INFO - Loading raw data from data/raw/raw_data.jsonl
+2026-07-19 12:40:11,986 - batterijberekening.data.timeseries - INFO - Loaded 1 raw data records from data/raw/raw_data.jsonl
+2026-07-19 12:40:11,992 - batterijberekening.data.timeseries - INFO - Parsed 24 hourly consumption records
+2026-07-19 12:40:11,992 - batterijberekening.data.timeseries - INFO - Parsed 24 hourly solar records
+2026-07-19 12:40:12,016 - batterijberekening.data.timeseries - WARNING - Dropped 2 days with insufficient hourly data
+2026-07-19 12:40:12,016 - batterijberekening.data.timeseries - INFO - Built daily DataFrame with 0 days and 48 columns
+2026-07-19 12:40:12,022 - batterijberekening.data.timeseries - INFO - Calculated night_consumption_kwh for 0 days
+2026-07-19 12:40:12,023 - batterijberekening.data.timeseries - INFO - Night consumption range: nan - nan kWh
+2026-07-19 12:40:12,024 - __main__ - ERROR - Error: No objects to concatenate
+2026-07-19 12:40:46,387 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 12:40:46,388 - __main__ - INFO - Building time series from raw data...
+2026-07-19 12:40:46,388 - batterijberekening.data.timeseries - INFO - Loading raw data from data/raw/raw_data.jsonl
+2026-07-19 12:40:46,391 - batterijberekening.data.timeseries - INFO - Loaded 1 raw data records from data/raw/raw_data.jsonl
+2026-07-19 12:40:46,401 - batterijberekening.data.timeseries - INFO - Parsed 168 hourly consumption records
+2026-07-19 12:40:46,401 - batterijberekening.data.timeseries - INFO - Parsed 168 hourly solar records
+2026-07-19 12:40:46,423 - batterijberekening.data.timeseries - WARNING - Dropped 2 days with insufficient hourly data
+2026-07-19 12:40:46,425 - batterijberekening.data.timeseries - INFO - Built daily DataFrame with 6 days and 48 columns
+2026-07-19 12:40:46,439 - batterijberekening.data.timeseries - INFO - Calculated night_consumption_kwh for 6 days
+2026-07-19 12:40:46,439 - batterijberekening.data.timeseries - INFO - Night consumption range: 7.27 - 7.27 kWh
+2026-07-19 12:40:46,447 - batterijberekening.data.timeseries - INFO - Computed monthly quantiles for 1 months
+2026-07-19 12:40:46,448 - __main__ - ERROR - Error: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - `Import pyarrow` failed. pyarrow is required for parquet support. Use pip or conda to install the pyarrow package.
+ - `Import fastparquet` failed. fastparquet is required for parquet support. Use pip or conda to install the fastparquet package.
+2026-07-19 19:14:52,967 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 19:14:52,969 - __main__ - INFO - Building time series from raw data...
+2026-07-19 19:14:52,969 - batterijberekening.data.timeseries - INFO - Loading raw data from data/raw/raw_data.jsonl
+2026-07-19 19:14:52,972 - batterijberekening.data.timeseries - INFO - Loaded 1 raw data records from data/raw/raw_data.jsonl
+2026-07-19 19:14:53,000 - batterijberekening.data.timeseries - INFO - Parsed 168 hourly consumption records
+2026-07-19 19:14:53,000 - batterijberekening.data.timeseries - INFO - Parsed 168 hourly solar records
+2026-07-19 19:14:53,022 - batterijberekening.data.timeseries - WARNING - Dropped 2 days with insufficient hourly data
+2026-07-19 19:14:53,023 - batterijberekening.data.timeseries - INFO - Built daily DataFrame with 6 days and 48 columns
+2026-07-19 19:14:53,043 - batterijberekening.data.timeseries - INFO - Calculated night_consumption_kwh for 6 days
+2026-07-19 19:14:53,044 - batterijberekening.data.timeseries - INFO - Night consumption range: 7.27 - 7.27 kWh
+2026-07-19 19:14:53,051 - batterijberekening.data.timeseries - INFO - Computed monthly quantiles for 1 months
+2026-07-19 19:14:53,103 - batterijberekening.data.timeseries - INFO - Saved processed data to data/processed
+2026-07-19 19:14:53,103 - __main__ - INFO - Daily data shape: (6, 52)
+2026-07-19 19:14:53,108 - __main__ - INFO - Night consumption stats:
+count    6.000
+mean     7.265
+std      0.000
+min      7.265
+25%      7.265
+50%      7.265
+75%      7.265
+max      7.265
+Name: night_consumption_kwh, dtype: float64
+2026-07-19 19:14:53,110 - batterijberekening.analysis.battery - INFO - Percentile 5%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:14:53,112 - batterijberekening.analysis.battery - INFO - Percentile 50%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:14:53,113 - batterijberekening.analysis.battery - INFO - Percentile 95%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:14:53,113 - batterijberekening.analysis.battery - INFO - Battery: 9.0 kWh, Cost: €5,382
+2026-07-19 19:14:53,114 - batterijberekening.analysis.battery - INFO - Annual night consumption: 2651.7 kWh
+2026-07-19 19:14:53,114 - batterijberekening.analysis.battery - INFO - Usable capacity/cycle: 7.3 kWh
+2026-07-19 19:14:53,114 - batterijberekening.analysis.battery - INFO - Energy shifted/year: 2651.7 kWh
+2026-07-19 19:14:53,115 - batterijberekening.analysis.battery - INFO - Annual savings: €583
+2026-07-19 19:14:53,115 - batterijberekening.analysis.battery - INFO - Payback: 9.2 years (4.6-13.8)
+2026-07-19 19:14:53,115 - __main__ - INFO - 
+==================================================
+2026-07-19 19:14:53,115 - __main__ - INFO - BATTERY SIZING RESULTS
+2026-07-19 19:14:53,115 - __main__ - INFO - ==================================================
+2026-07-19 19:14:53,115 - __main__ - INFO - Minimum capacity (P5): 9.0 kWh
+2026-07-19 19:14:53,115 - __main__ - INFO - Recommended capacity (P50): 9.0 kWh
+2026-07-19 19:14:53,115 - __main__ - INFO - Maximum capacity (P95): 9.0 kWh
+2026-07-19 19:14:53,115 - __main__ - INFO - 
+Annual night consumption: 2651.7 kWh
+2026-07-19 19:14:53,116 - __main__ - INFO - Annual savings potential: €583
+2026-07-19 19:14:53,116 - __main__ - INFO - Battery cost (recommended): €5,382
+2026-07-19 19:14:53,116 - __main__ - INFO - Payback period: 9.2 years (4.6 - 13.8)
+2026-07-19 19:14:53,116 - __main__ - INFO - ==================================================
+2026-07-19 19:14:53,117 - __main__ - INFO - Saved results to output/exports/battery_sizing_result.json
+2026-07-19 19:14:53,117 - __main__ - INFO - Saved report to output/exports/battery_sizing_report.md
+2026-07-19 19:14:53,118 - __main__ - INFO - Analysis complete!
+2026-07-19 19:15:03,477 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 19:15:03,478 - __main__ - INFO - Loading existing daily data from data/processed/night_consumption_daily.parquet
+2026-07-19 19:15:03,565 - __main__ - INFO - Loading existing quantiles from data/processed/monthly_quantiles.parquet
+2026-07-19 19:15:03,576 - __main__ - INFO - Daily data shape: (6, 52)
+2026-07-19 19:15:03,584 - __main__ - INFO - Night consumption stats:
+count    6.000
+mean     7.265
+std      0.000
+min      7.265
+25%      7.265
+50%      7.265
+75%      7.265
+max      7.265
+Name: night_consumption_kwh, dtype: float64
+2026-07-19 19:15:03,588 - batterijberekening.analysis.battery - INFO - Percentile 5%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:15:03,590 - batterijberekening.analysis.battery - INFO - Percentile 50%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:15:03,593 - batterijberekening.analysis.battery - INFO - Percentile 95%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:15:03,593 - batterijberekening.analysis.battery - INFO - Battery: 9.0 kWh, Cost: €5,382
+2026-07-19 19:15:03,593 - batterijberekening.analysis.battery - INFO - Annual night consumption: 2651.7 kWh
+2026-07-19 19:15:03,593 - batterijberekening.analysis.battery - INFO - Usable capacity/cycle: 7.3 kWh
+2026-07-19 19:15:03,594 - batterijberekening.analysis.battery - INFO - Energy shifted/year: 2651.7 kWh
+2026-07-19 19:15:03,594 - batterijberekening.analysis.battery - INFO - Annual savings: €583
+2026-07-19 19:15:03,594 - batterijberekening.analysis.battery - INFO - Payback: 9.2 years (4.6-13.8)
+2026-07-19 19:15:03,594 - __main__ - INFO - 
+==================================================
+2026-07-19 19:15:03,594 - __main__ - INFO - BATTERY SIZING RESULTS
+2026-07-19 19:15:03,595 - __main__ - INFO - ==================================================
+2026-07-19 19:15:03,595 - __main__ - INFO - Minimum capacity (P5): 9.0 kWh
+2026-07-19 19:15:03,595 - __main__ - INFO - Recommended capacity (P50): 9.0 kWh
+2026-07-19 19:15:03,595 - __main__ - INFO - Maximum capacity (P95): 9.0 kWh
+2026-07-19 19:15:03,595 - __main__ - INFO - 
+Annual night consumption: 2651.7 kWh
+2026-07-19 19:15:03,595 - __main__ - INFO - Annual savings potential: €583
+2026-07-19 19:15:03,595 - __main__ - INFO - Battery cost (recommended): €5,382
+2026-07-19 19:15:03,595 - __main__ - INFO - Payback period: 9.2 years (4.6 - 13.8)
+2026-07-19 19:15:03,595 - __main__ - INFO - ==================================================
+2026-07-19 19:15:03,596 - __main__ - INFO - Saved results to output/exports/battery_sizing_result.json
+2026-07-19 19:15:03,596 - __main__ - INFO - Saved report to output/exports/battery_sizing_report.md
+2026-07-19 19:15:03,596 - __main__ - INFO - Generating plots...
+2026-07-19 19:15:03,597 - __main__ - ERROR - Error: get expected at most 2 arguments, got 3
+2026-07-19 19:15:50,861 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 19:15:50,863 - __main__ - INFO - Loading existing daily data from data/processed/night_consumption_daily.parquet
+2026-07-19 19:15:50,999 - __main__ - INFO - Loading existing quantiles from data/processed/monthly_quantiles.parquet
+2026-07-19 19:15:51,004 - __main__ - INFO - Daily data shape: (6, 52)
+2026-07-19 19:15:51,015 - __main__ - INFO - Night consumption stats:
+count    6.000
+mean     7.265
+std      0.000
+min      7.265
+25%      7.265
+50%      7.265
+75%      7.265
+max      7.265
+Name: night_consumption_kwh, dtype: float64
+2026-07-19 19:15:51,017 - batterijberekening.analysis.battery - INFO - Percentile 5%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:15:51,018 - batterijberekening.analysis.battery - INFO - Percentile 50%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:15:51,019 - batterijberekening.analysis.battery - INFO - Percentile 95%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:15:51,019 - batterijberekening.analysis.battery - INFO - Battery: 9.0 kWh, Cost: €5,382
+2026-07-19 19:15:51,019 - batterijberekening.analysis.battery - INFO - Annual night consumption: 2651.7 kWh
+2026-07-19 19:15:51,019 - batterijberekening.analysis.battery - INFO - Usable capacity/cycle: 7.3 kWh
+2026-07-19 19:15:51,019 - batterijberekening.analysis.battery - INFO - Energy shifted/year: 2651.7 kWh
+2026-07-19 19:15:51,020 - batterijberekening.analysis.battery - INFO - Annual savings: €583
+2026-07-19 19:15:51,020 - batterijberekening.analysis.battery - INFO - Payback: 9.2 years (4.6-13.8)
+2026-07-19 19:15:51,020 - __main__ - INFO - 
+==================================================
+2026-07-19 19:15:51,020 - __main__ - INFO - BATTERY SIZING RESULTS
+2026-07-19 19:15:51,020 - __main__ - INFO - ==================================================
+2026-07-19 19:15:51,020 - __main__ - INFO - Minimum capacity (P5): 9.0 kWh
+2026-07-19 19:15:51,020 - __main__ - INFO - Recommended capacity (P50): 9.0 kWh
+2026-07-19 19:15:51,020 - __main__ - INFO - Maximum capacity (P95): 9.0 kWh
+2026-07-19 19:15:51,020 - __main__ - INFO - 
+Annual night consumption: 2651.7 kWh
+2026-07-19 19:15:51,020 - __main__ - INFO - Annual savings potential: €583
+2026-07-19 19:15:51,020 - __main__ - INFO - Battery cost (recommended): €5,382
+2026-07-19 19:15:51,020 - __main__ - INFO - Payback period: 9.2 years (4.6 - 13.8)
+2026-07-19 19:15:51,020 - __main__ - INFO - ==================================================
+2026-07-19 19:15:51,021 - __main__ - INFO - Saved results to output/exports/battery_sizing_result.json
+2026-07-19 19:15:51,022 - __main__ - INFO - Saved report to output/exports/battery_sizing_report.md
+2026-07-19 19:15:51,022 - __main__ - INFO - Generating plots...
+2026-07-19 19:15:51,022 - __main__ - ERROR - Error: get expected at most 2 arguments, got 3
+2026-07-19 19:18:51,874 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 19:18:51,876 - __main__ - INFO - Loading existing daily data from data/processed/night_consumption_daily.parquet
+2026-07-19 19:18:52,030 - __main__ - INFO - Loading existing quantiles from data/processed/monthly_quantiles.parquet
+2026-07-19 19:18:52,037 - __main__ - INFO - Daily data shape: (6, 52)
+2026-07-19 19:18:52,055 - __main__ - INFO - Night consumption stats:
+count    6.000
+mean     7.265
+std      0.000
+min      7.265
+25%      7.265
+50%      7.265
+75%      7.265
+max      7.265
+Name: night_consumption_kwh, dtype: float64
+2026-07-19 19:18:52,056 - batterijberekening.analysis.battery - INFO - Percentile 5%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:18:52,057 - batterijberekening.analysis.battery - INFO - Percentile 50%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:18:52,058 - batterijberekening.analysis.battery - INFO - Percentile 95%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:18:52,058 - batterijberekening.analysis.battery - INFO - Battery: 9.0 kWh, Cost: €5,382
+2026-07-19 19:18:52,058 - batterijberekening.analysis.battery - INFO - Annual night consumption: 2651.7 kWh
+2026-07-19 19:18:52,058 - batterijberekening.analysis.battery - INFO - Usable capacity/cycle: 7.3 kWh
+2026-07-19 19:18:52,058 - batterijberekening.analysis.battery - INFO - Energy shifted/year: 2651.7 kWh
+2026-07-19 19:18:52,058 - batterijberekening.analysis.battery - INFO - Annual savings: €583
+2026-07-19 19:18:52,058 - batterijberekening.analysis.battery - INFO - Payback: 9.2 years (4.6-13.8)
+2026-07-19 19:18:52,058 - __main__ - INFO - 
+==================================================
+2026-07-19 19:18:52,058 - __main__ - INFO - BATTERY SIZING RESULTS
+2026-07-19 19:18:52,058 - __main__ - INFO - ==================================================
+2026-07-19 19:18:52,058 - __main__ - INFO - Minimum capacity (P5): 9.0 kWh
+2026-07-19 19:18:52,059 - __main__ - INFO - Recommended capacity (P50): 9.0 kWh
+2026-07-19 19:18:52,059 - __main__ - INFO - Maximum capacity (P95): 9.0 kWh
+2026-07-19 19:18:52,059 - __main__ - INFO - 
+Annual night consumption: 2651.7 kWh
+2026-07-19 19:18:52,059 - __main__ - INFO - Annual savings potential: €583
+2026-07-19 19:18:52,059 - __main__ - INFO - Battery cost (recommended): €5,382
+2026-07-19 19:18:52,059 - __main__ - INFO - Payback period: 9.2 years (4.6 - 13.8)
+2026-07-19 19:18:52,059 - __main__ - INFO - ==================================================
+2026-07-19 19:18:52,060 - __main__ - INFO - Saved results to output/exports/battery_sizing_result.json
+2026-07-19 19:18:52,063 - __main__ - INFO - Saved report to output/exports/battery_sizing_report.md
+2026-07-19 19:18:52,063 - __main__ - INFO - Generating plots...
+2026-07-19 19:18:52,063 - __main__ - ERROR - Error: get expected at most 2 arguments, got 3
+2026-07-19 19:21:29,894 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 19:21:29,896 - __main__ - INFO - Loading existing daily data from data/processed/night_consumption_daily.parquet
+2026-07-19 19:21:30,002 - __main__ - INFO - Loading existing quantiles from data/processed/monthly_quantiles.parquet
+2026-07-19 19:21:30,006 - __main__ - INFO - Daily data shape: (6, 52)
+2026-07-19 19:21:30,018 - __main__ - INFO - Night consumption stats:
+count    6.000
+mean     7.265
+std      0.000
+min      7.265
+25%      7.265
+50%      7.265
+75%      7.265
+max      7.265
+Name: night_consumption_kwh, dtype: float64
+2026-07-19 19:21:30,020 - batterijberekening.analysis.battery - INFO - Percentile 5%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:21:30,020 - batterijberekening.analysis.battery - INFO - Percentile 50%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:21:30,021 - batterijberekening.analysis.battery - INFO - Percentile 95%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:21:30,021 - batterijberekening.analysis.battery - INFO - Battery: 9.0 kWh, Cost: €5,382
+2026-07-19 19:21:30,021 - batterijberekening.analysis.battery - INFO - Annual night consumption: 2651.7 kWh
+2026-07-19 19:21:30,021 - batterijberekening.analysis.battery - INFO - Usable capacity/cycle: 7.3 kWh
+2026-07-19 19:21:30,021 - batterijberekening.analysis.battery - INFO - Energy shifted/year: 2651.7 kWh
+2026-07-19 19:21:30,021 - batterijberekening.analysis.battery - INFO - Annual savings: €583
+2026-07-19 19:21:30,021 - batterijberekening.analysis.battery - INFO - Payback: 9.2 years (4.6-13.8)
+2026-07-19 19:21:30,022 - __main__ - INFO - 
+==================================================
+2026-07-19 19:21:30,022 - __main__ - INFO - BATTERY SIZING RESULTS
+2026-07-19 19:21:30,022 - __main__ - INFO - ==================================================
+2026-07-19 19:21:30,022 - __main__ - INFO - Minimum capacity (P5): 9.0 kWh
+2026-07-19 19:21:30,022 - __main__ - INFO - Recommended capacity (P50): 9.0 kWh
+2026-07-19 19:21:30,022 - __main__ - INFO - Maximum capacity (P95): 9.0 kWh
+2026-07-19 19:21:30,022 - __main__ - INFO - 
+Annual night consumption: 2651.7 kWh
+2026-07-19 19:21:30,022 - __main__ - INFO - Annual savings potential: €583
+2026-07-19 19:21:30,022 - __main__ - INFO - Battery cost (recommended): €5,382
+2026-07-19 19:21:30,022 - __main__ - INFO - Payback period: 9.2 years (4.6 - 13.8)
+2026-07-19 19:21:30,022 - __main__ - INFO - ==================================================
+2026-07-19 19:21:30,023 - __main__ - INFO - Saved results to output/exports/battery_sizing_result.json
+2026-07-19 19:21:30,024 - __main__ - INFO - Saved report to output/exports/battery_sizing_report.md
+2026-07-19 19:21:30,024 - __main__ - INFO - Generating plots...
+2026-07-19 19:21:30,024 - __main__ - ERROR - Error: get expected at most 2 arguments, got 3
+2026-07-19 19:22:05,134 - __main__ - INFO - Starting battery sizing analysis...
+2026-07-19 19:22:05,137 - __main__ - INFO - Loading existing daily data from data/processed/night_consumption_daily.parquet
+2026-07-19 19:22:05,268 - __main__ - INFO - Loading existing quantiles from data/processed/monthly_quantiles.parquet
+2026-07-19 19:22:05,272 - __main__ - INFO - Daily data shape: (6, 52)
+2026-07-19 19:22:05,287 - __main__ - INFO - Night consumption stats:
+count    6.000
+mean     7.265
+std      0.000
+min      7.265
+25%      7.265
+50%      7.265
+75%      7.265
+max      7.265
+Name: night_consumption_kwh, dtype: float64
+2026-07-19 19:22:05,289 - batterijberekening.analysis.battery - INFO - Percentile 5%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:22:05,289 - batterijberekening.analysis.battery - INFO - Percentile 50%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:22:05,290 - batterijberekening.analysis.battery - INFO - Percentile 95%: night consumption = 7.27 kWh, battery capacity = 8.97 kWh
+2026-07-19 19:22:05,290 - batterijberekening.analysis.battery - INFO - Battery: 9.0 kWh, Cost: €5,382
+2026-07-19 19:22:05,290 - batterijberekening.analysis.battery - INFO - Annual night consumption: 2651.7 kWh
+2026-07-19 19:22:05,290 - batterijberekening.analysis.battery - INFO - Usable capacity/cycle: 7.3 kWh
+2026-07-19 19:22:05,290 - batterijberekening.analysis.battery - INFO - Energy shifted/year: 2651.7 kWh
+2026-07-19 19:22:05,290 - batterijberekening.analysis.battery - INFO - Annual savings: €583
+2026-07-19 19:22:05,290 - batterijberekening.analysis.battery - INFO - Payback: 9.2 years (4.6-13.8)
+2026-07-19 19:22:05,291 - __main__ - INFO - 
+==================================================
+2026-07-19 19:22:05,291 - __main__ - INFO - BATTERY SIZING RESULTS
+2026-07-19 19:22:05,291 - __main__ - INFO - ==================================================
+2026-07-19 19:22:05,291 - __main__ - INFO - Minimum capacity (P5): 9.0 kWh
+2026-07-19 19:22:05,291 - __main__ - INFO - Recommended capacity (P50): 9.0 kWh
+2026-07-19 19:22:05,291 - __main__ - INFO - Maximum capacity (P95): 9.0 kWh
+2026-07-19 19:22:05,291 - __main__ - INFO - 
+Annual night consumption: 2651.7 kWh
+2026-07-19 19:22:05,291 - __main__ - INFO - Annual savings potential: €583
+2026-07-19 19:22:05,291 - __main__ - INFO - Battery cost (recommended): €5,382
+2026-07-19 19:22:05,291 - __main__ - INFO - Payback period: 9.2 years (4.6 - 13.8)
+2026-07-19 19:22:05,291 - __main__ - INFO - ==================================================
+2026-07-19 19:22:05,292 - __main__ - INFO - Saved results to output/exports/battery_sizing_result.json
+2026-07-19 19:22:05,292 - __main__ - INFO - Saved report to output/exports/battery_sizing_report.md
+2026-07-19 19:22:05,293 - __main__ - INFO - Generating plots...
+2026-07-19 19:22:05,350 - matplotlib.category - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2026-07-19 19:22:05,377 - matplotlib.category - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2026-07-19 19:22:05,743 - batterijberekening.plotting.plots - INFO - Saved boxplot to output/plots/monthly_boxplot_night_consumption.png
+2026-07-19 19:22:06,027 - batterijberekening.plotting.plots - INFO - Saved ribbon plot to output/plots/quantile_ribbon_night_consumption.png
+2026-07-19 19:22:06,302 - batterijberekening.plotting.plots - INFO - Saved smoothed ribbon plot to output/plots/quantile_ribbon_smoothed_w3.png
+2026-07-19 19:22:06,750 - batterijberekening.plotting.plots - INFO - Saved interactive plot to output/plots/interactive_quantile_ribbon.html
+2026-07-19 19:22:07,083 - batterijberekening.plotting.plots - INFO - Saved interactive boxplot to output/plots/interactive_monthly_boxplot.html
+2026-07-19 19:22:07,083 - __main__ - INFO - Plots saved to output/plots/
+2026-07-19 19:22:07,085 - __main__ - INFO - Analysis complete!
