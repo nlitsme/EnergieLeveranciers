@@ -44,8 +44,10 @@ export ENERGY_PROVIDER=eneco  # or vattenfall
 export ENECO_USERNAME=your@email.com
 export ENECO_PASSWORD=yourpassword
 # For Vattenfall:
-export VATTENFALL_AUTH_TOKEN=your_bearer_token
-export VATTENFALL_CUSTOMER_ID=your_customer_id
+export VATTENFALL_AUTH_TOKEN=your_bearer_token  # Expires every 2h, re-extract from browser
+export VATTENFALL_CUSTOMER_ID=0025431819
+export VATTENFALL_VF_CONTEXT=0025431819:003015847385
+export VATTENFALL_API_KEY=ed989141b5c34d138dba4a3ce1dbe046
 ```
 
 ### Config Options
@@ -77,6 +79,12 @@ batterijberekening --no-plots
 
 # Use different provider
 batterijberekening --provider vattenfall
+
+# Test Vattenfall API connection (check if token works)
+batterijberekening --provider vattenfall --check-api
+
+# Refresh Vattenfall token (after extracting from browser)
+./scripts/refresh-vattenfall-token.sh eyJraWQ...<new_token>
 
 # More years of data
 batterijberekening --years 3

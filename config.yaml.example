@@ -17,10 +17,11 @@ energy_provider:
   
   # Vattenfall credentials (or set via VATTENFALL_AUTH_TOKEN/VATTENFALL_CUSTOMER_ID env vars)
   vattenfall:
-    auth_token: ""  # Bearer token from browser dev tools
-    customer_id: ""  # BusinessPartnerId/ContractAccountId
-    api_key: "f5406a12dbdd41a2ad8e0de5a69d9e00"
-    base_url: "https://api.vattenfall.nl/api/mijnnuonprd/v2"
+    auth_token: ""  # Bearer token from browser dev tools (expires every 2h)
+    customer_id: ""  # BusinessPartnerId/ContractAccountId (e.g., 0025431819)
+    api_key: "ed989141b5c34d138dba4a3ce1dbe046"  # Ocp-Apim-Subscription-Key (from HAR)
+    vf_context: ""  # vf-context header (e.g., "0025431819:003015847385")
+    base_url: "https://api.vattenfall.nl/api/mvf/consumptions/v0"
 
 # Timezone for all timestamps
 timezone:

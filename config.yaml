@@ -17,10 +17,11 @@ energy_provider:
   
   # Vattenfall configuration
   vattenfall:
-    auth_token: ""  # Set via VATTENFALL_AUTH_TOKEN env var
-    customer_id: ""  # Set via VATTENFALL_CUSTOMER_ID env var
-    api_key: "f5406a12dbdd41a2ad8e0de5a69d9e00"
-    base_url: "https://api.vattenfall.nl/api/mijnnuonprd/v2"
+    auth_token: ""  # Set via VATTENFALL_AUTH_TOKEN env var (Bearer token from browser, expires 2h)
+    customer_id: "0025431819"  # Set via VATTENFALL_CUSTOMER_ID env var (BusinessPartnerId)
+    api_key: "ed989141b5c34d138dba4a3ce1dbe046"  # Ocp-Apim-Subscription-Key from browser
+    vf_context: "0025431819:003015847385"  # Set via VATTENFALL_VF_CONTEXT env var
+    base_url: "https://api.vattenfall.nl/api/mvf/consumptions/v0"
 
 # Timezone configuration
 timezone:

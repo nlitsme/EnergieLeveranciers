@@ -1,6 +1,9 @@
 """
 Vattenfall energy provider API client for batterijberekening.
-Based on the original vattenfall.py from nlitsme/EnergieLeveranciers.
+Based on the new Vattenfall API (api.mvf.consumptions.v0) as captured from browser HAR.
+
+The API is purely token-based, no browser session cookies needed.
+Token expires every 2 hours — re-extract from browser dev tools when needed.
 """
 
 import json
@@ -8,7 +11,6 @@ import logging
 import urllib.parse
 import urllib.request
 import urllib.error
-import http.cookiejar
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
@@ -39,44 +41,68 @@ class HourlyReading:
 
 
 class VattenfallClient:
-    """Vattenfall API client for fetching hourly energy usage data."""
+    """Vattenfall API client for fetching hourly energy usage data.
+    
+    Uses Bearer token auth (2h expiry) + Ocp-Apim-Subscription-Key + vf-context.
+    No browser session cookies needed — the API is purely token-based.
+    """
     
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or get_config()
-        self.vattenfall_config = self.config.get('energy_provider', 'vattenfall')
+        self.vattenfall_config = self.config.get('energy_provider', {}).get('vattenfall', {})
         
         # API configuration
-        self.api_key = self.vattenfall_config.get('api_key', 'f5406a12dbdd41a2ad8e0de5a69d9e00')
-        self.base_url = self.vattenfall_config.get('base_url', 'https://api.vattenfall.nl/api/mijnnuonprd/v2')
+        self.api_key = self.vattenfall_config.get('api_key', 'ed989141b5c34d138dba4a3ce1dbe046')
+        self.base_url = self.vattenfall_config.get('base_url', 'https://api.vattenfall.nl/api/mvf/consumptions/v0')
         self.auth_token = self.vattenfall_config.get('auth_token', '')
-        self.customer_id = self.vattenfall_config.get('customer_id', '')
+        self.vf_context = self.vattenfall_config.get('vf_context', '')
         
-        # HTTP setup
-        self.cookie_jar = http.cookiejar.CookieJar()
-        handlers = [urllib.request.HTTPCookieProcessor(self.cookie_jar)]
-        self.opener = urllib.request.build_opener(*handlers)
+        if not self.auth_token:
+            raise RuntimeError(
+                "Vattenfall auth_token not set. "
+                "Set VATTENFALL_AUTH_TOKEN in .env or config.yaml.\n"
+                "Get a fresh token from browser dev tools:\n"
+                "  1. Open https://www.vattenfall.nl/mijn-vattenfall/\n"
+                "  2. DevTools → Network → filter 'consumptions'\n"
+                "  3. Copy 'Authorization: Bearer ***' value"
+            )
+        
+        # HTTP setup — no cookie jar needed, purely token-based
+        self.opener = urllib.request.build_opener()
     
     def _log(self, *args):
-        if self.config.get('logging', 'level') == 'DEBUG':
+        if self.config.get('logging', {}).get('level') == 'DEBUG':
             logger.debug(*args)
     
-    def _http_request(self, url: str, data: Optional[Dict] = None, method: str = 'GET') -> Any:
-        """Make HTTP request with proper headers."""
-        self._log(">", url)
-        
+    def _build_headers(self) -> Dict[str, str]:
+        """Build request headers matching the browser HAR exactly."""
         headers = {
-            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'nl,en-US;q=0.9,en;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br, zstd',
+            'Referer': 'https://www.vattenfall.nl/',
+            'Origin': 'https://www.vattenfall.nl',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-site',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0',
+            'Connection': 'keep-alive',
+            'TE': 'trailers',
             'Ocp-Apim-Subscription-Key': self.api_key,
+            'Authorization': f'Bearer {self.auth_token}',
         }
         
-        if self.auth_token:
-            headers['Authorization'] = "Bearer " + self.auth_token
+        if self.vf_context:
+            headers['vf-context'] = self.vf_context
         
-        req_data = None
-        if data:
-            req_data = json.dumps(data).encode('utf-8')
+        return headers
+    
+    def _http_request(self, url: str, method: str = 'GET') -> Any:
+        """Make HTTP request with proper headers matching the browser HAR."""
+        self._log(">", url)
         
-        req = urllib.request.Request(url, data=req_data, headers=headers, method=method)
+        headers = self._build_headers()
+        req = urllib.request.Request(url, data=None, headers=headers, method=method)
         
         for attempt in range(3):
             try:
@@ -91,7 +117,18 @@ class VattenfallClient:
                 return response_data
                 
             except urllib.error.HTTPError as e:
-                self._log("!", str(e))
+                if e.code == 401:
+                    logger.error(
+                        "Vattenfall API returned 401 Unauthorized.\n"
+                        "Your auth token has expired (2h validity).\n"
+                        "Get a fresh token:\n"
+                        "  1. Open https://www.vattenfall.nl/mijn-vattenfall/\n"
+                        "  2. DevTools → Network → filter 'consumptions'\n"
+                        "  3. Copy 'Authorization: Bearer ***' value\n"
+                        "  4. Update .env: VATTENFALL_AUTH_TOKEN=<new_token>"
+                    )
+                    raise
+                logger.error(f"HTTP {e.code}: {e.reason} for {url}")
                 if attempt == 2:
                     raise
             except Exception as e:
@@ -101,52 +138,84 @@ class VattenfallClient:
         
         return None
     
-    def get_usage(self, start_date: datetime, end_date: datetime, interval: int = 5) -> List[Dict]:
+    def get_hourly_consumption(self, end_date: datetime, amount: int = 72) -> List[Dict]:
         """
-        Get hourly usage data for a date range.
+        Get hourly electricity consumption data.
         
         Args:
-            start_date: Start date (inclusive)
-            end_date: End date (inclusive)
-            interval: 5 = hourly, 3 = daily, 1 = monthly, 6 = yearly
+            end_date: End date for data (API returns data backwards from this date)
+            amount: Number of hours to fetch (max 72 per request based on HAR)
             
         Returns:
-            List of raw API response objects
+            List of hourly consumption data objects
         """
-        if not self.auth_token or not self.customer_id:
-            raise RuntimeError("Not authenticated. Set auth_token and customer_id in config.")
+        end_date_str = end_date.strftime('%Y-%m-%d')
+        params = {
+            'amount': str(amount),
+            'endDate': end_date_str,
+        }
         
+        url = f"{self.base_url}/consumptions/products/Electricity/Hour?{urllib.parse.urlencode(params)}"
+        
+        try:
+            data = self._http_request(url)
+            if data:
+                return data if isinstance(data, list) else [data]
+        except Exception as e:
+            logger.error(f"Failed to fetch hourly consumption for {end_date_str}: {e}")
+        
+        return []
+    
+    def get_monthly_consumption(self, end_date: datetime, amount: int = 14) -> List[Dict]:
+        """
+        Get monthly electricity consumption data.
+        
+        Args:
+            end_date: End date for data
+            amount: Number of months to fetch
+            
+        Returns:
+            List of monthly consumption data objects
+        """
+        end_date_str = end_date.strftime('%Y-%m-%d')
+        params = {
+            'amount': str(amount),
+            'endDate': end_date_str,
+        }
+        
+        url = f"{self.base_url}/consumptions/products/Electricity/Month?{urllib.parse.urlencode(params)}"
+        
+        try:
+            data = self._http_request(url)
+            if data:
+                return data if isinstance(data, list) else [data]
+        except Exception as e:
+            logger.error(f"Failed to fetch monthly consumption for {end_date_str}: {e}")
+        
+        return []
+    
+    def get_usage(self, start_date: datetime, end_date: datetime) -> List[Dict]:
+        """
+        Get usage data for a date range by making multiple API calls.
+        
+        The API fetches backwards from end_date with max 72 hours per call.
+        We iterate backwards from end_date to start_date.
+        """
         all_data = []
-        current = start_date
-        chunk_days = 7 if interval == 5 else 31 if interval == 3 else 366
+        current_end = end_date
         
-        while current <= end_date:
-            chunk_end = min(current + timedelta(days=chunk_days - 1), end_date)
+        while current_end > start_date:
+            hours_needed = int((current_end - start_date).total_seconds() / 3600) + 1
+            amount = min(72, hours_needed)
             
-            start_str = current.strftime('%Y-%m-%d')
-            end_str = chunk_end.strftime('%Y-%m-%d')
+            data = self.get_hourly_consumption(current_end, amount)
+            if data:
+                all_data.extend(data)
             
-            params = {
-                'Interval': interval,
-                'GetAggregatedResults': False,
-                'GetAmountDetails': False,
-                'GetAmounts': True,
-                'GetRoundedAmounts': False,
-                'GetComparedConsumption': False,
-                'DateFrom': start_str,
-                'DateTo': end_str,
-            }
+            current_end -= timedelta(hours=amount)
             
-            url = f"{self.base_url}/consumptions/consumptions/{self.customer_id}/{interval}/?{urllib.parse.urlencode(params)}"
-            
-            try:
-                data = self._http_request(url)
-                if data:
-                    all_data.append(data)
-            except Exception as e:
-                logger.error(f"Failed to fetch usage for {start_str} to {end_str}: {e}")
-            
-            current = chunk_end + timedelta(days=1)
+            import time
+            time.sleep(0.5)
         
         return all_data
 

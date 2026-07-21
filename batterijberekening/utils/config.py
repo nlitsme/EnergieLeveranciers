@@ -74,6 +74,8 @@ def _apply_env_overrides(config: Dict[str, Any]) -> Dict[str, Any]:
         vattenfall['customer_id'] = os.getenv('VATTENFALL_CUSTOMER_ID')
     if os.getenv('VATTENFALL_API_KEY'):
         vattenfall['api_key'] = os.getenv('VATTENFALL_API_KEY')
+    if os.getenv('VATTENFALL_VF_CONTEXT'):
+        vattenfall['vf_context'] = os.getenv('VATTENFALL_VF_CONTEXT')
     
     # Timezone
     if os.getenv('TIMEZONE'):

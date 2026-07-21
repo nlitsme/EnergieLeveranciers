@@ -149,60 +149,71 @@ class TimeSeriesBuilder:
         """
         Parse Vattenfall API response into hourly consumption and solar DataFrames.
         
+        Handles the new Vattenfall API (api.mvf.consumptions.v0) which returns
+        an array of objects with fields: date, value, unit, type, tariff.
+        
         Returns:
             Tuple of (consumption_df, solar_df) with hourly data indexed by timestamp.
         """
-        records = []
+        from batterijberekening.data.vattenfall_summarize import parse_vattenfall_hourly
         
+        # The new API returns flat arrays — flatten raw_data chunks
+        all_items = []
         for response in raw_data:
-            if not response:
-                continue
-            
-            consumption_header = response.get('ConsumptionHeaderSet', [])
-            for header in consumption_header:
-                product = header.get('Product', '')
-                consumption_set = header.get('ConsumptionSet', [])
-                
-                for item in consumption_set:
-                    date_str = item.get('DateFrom', '')
-                    time_str = item.get('TimeFrom', '00:00')
-                    delivery = float(item.get('DeliveryQuantity', 0) or 0)
-                    redelivery = float(item.get('BackDeliveryQuantity', 0) or 0)
-                    
-                    try:
-                        ts = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
-                        ts = self.timezone.localize(ts)
-                    except (ValueError, TypeError):
-                        continue
-                    
-                    records.append({
-                        'timestamp': ts,
-                        'product': product,
-                        'consumption_kwh': delivery,
-                        'solar_kwh': redelivery,
-                    })
+            if isinstance(response, list):
+                all_items.extend(response)
+            elif isinstance(response, dict):
+                all_items.append(response)
         
-        if not records:
-            logger.warning("No valid records found in Vattenfall data")
+        if not all_items:
+            logger.warning("No data returned from Vattenfall API")
             return pd.DataFrame(), pd.DataFrame()
+        
+        logger.info(f"Parsing {len(all_items)} Vattenfall API response items")
+        
+        # Parse using the new format parser
+        parsed = parse_vattenfall_hourly(all_items)
+        
+        if not parsed:
+            logger.warning("No valid records parsed from Vattenfall data")
+            return pd.DataFrame(), pd.DataFrame()
+        
+        # Build DataFrame
+        records = []
+        for p in parsed:
+            ts = p['timestamp']
+            if self.timezone:
+                # Localize if naive, convert if already tz-aware
+                if ts.tzinfo is None:
+                    ts = self.timezone.localize(ts)
+                else:
+                    ts = ts.astimezone(self.timezone)
+            
+            # Sum electricity consumption (low + high tariff)
+            consumption = p.get('electricity_low', 0.0) + p.get('electricity_high', 0.0)
+            # Redelivery/teruglevering = solar export
+            solar = p.get('redelivery_low', 0.0) + p.get('redelivery_high', 0.0)
+            produced = p.get('produced', 0.0)
+            
+            # Use produced value if available, otherwise use redelivery as proxy
+            solar_value = produced if produced > 0 else solar
+            
+            records.append({
+                'timestamp': ts,
+                'consumption_kwh': consumption,
+                'solar_kwh': solar_value,
+                'produced_kwh': produced,
+            })
         
         df = pd.DataFrame(records)
         df.set_index('timestamp', inplace=True)
         df.sort_index(inplace=True)
         
-        # Check for multiple solar sources
-        solar_sources = df[df['solar_kwh'] > 0]['product'].unique()
-        if len(solar_sources) > 1:
-            raise ValueError(
-                f"Multiple solar sources detected: {solar_sources}. "
-                "Please specify how to aggregate."
-            )
-        
-        # Aggregate by timestamp (sum across products)
+        # Remove duplicate timestamps (aggregate by summing)
         consumption_df = df.groupby(df.index)['consumption_kwh'].sum().to_frame()
-        solar_df = df.groupby(df.index)['solar_kwh'].sum().to_frame()
+        solar_df = df.groupby(df.index)[['solar_kwh', 'produced_kwh']].sum()
         
-        # Resample to hourly
+        # Resample to hourly frequency (fill missing hours with NaN)
         consumption_df = consumption_df.asfreq('h')
         solar_df = solar_df.asfreq('h')
         

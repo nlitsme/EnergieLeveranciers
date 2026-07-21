@@ -3,6 +3,7 @@ Main CLI entry point for batterijberekening.
 """
 
 import argparse
+import json
 import logging
 import sys
 from pathlib import Path
@@ -58,7 +59,18 @@ def fetch_data(args, config: dict) -> pd.DataFrame:
     elif provider == 'vattenfall':
         client = create_vattenfall_client(config)
         # Fetch data
-        # ... implement based on client
+        logger.info("Fetching Vattenfall hourly consumption data...")
+        raw_data = client.get_usage(start_date.to_pydatetime(), end_date.to_pydatetime())
+        logger.info(f"Fetched {len(raw_data)} data chunks from Vattenfall API")
+        # Parse and convert to DataFrame
+        from batterijberekening.data.vattenfall_summarize import parse_vattenfall_hourly
+        hourly_data = parse_vattenfall_hourly(raw_data)
+        if hourly_data:
+            df = pd.DataFrame(hourly_data)
+            df.set_index('timestamp', inplace=True)
+            return df
+        else:
+            logger.warning("No data returned from Vattenfall API")
     else:
         raise ValueError(f"Unknown provider: {provider}")
     
@@ -152,6 +164,8 @@ Examples:
   batterijberekening --fetch-only       # Only fetch data from API
   batterijberekening --no-plots         # Skip plot generation
   batterijberekening --force-fetch      # Force re-fetch from API
+  batterijberekening --check-api        # Test API connection (Vattenfall)
+  batterijberekening --provider vattenfall --check-api  # Test Vattenfall token
         """
     )
     
@@ -169,6 +183,8 @@ Examples:
                        help='Years of historical data to fetch')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Enable debug logging')
+    parser.add_argument('--check-api', action='store_true',
+                       help='Test API connection and return status')
     
     args = parser.parse_args()
     
@@ -187,6 +203,22 @@ Examples:
     setup_logging(config)
     
     try:
+        if args.check_api:
+            # Test API connection
+            provider = config.get('energy_provider', {}).get('provider', 'eneco')
+            if provider == 'vattenfall':
+                client = create_vattenfall_client(config)
+                from datetime import datetime, timedelta
+                test_data = client.get_hourly_consumption(datetime.now(), 1)
+                if test_data:
+                    logger.info(f"✅ API connection OK — got {len(test_data)} items")
+                    logger.info(f"   Sample: {json.dumps(test_data[0], indent=2)[:500]}")
+                else:
+                    logger.warning("⚠️  API returned empty data (token might be expired)")
+            else:
+                logger.warning(f"--check-api not implemented for provider '{provider}'")
+            return
+        
         if args.fetch_only:
             fetch_data(args, config)
             logger.info("Data fetch complete")
