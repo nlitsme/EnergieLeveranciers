@@ -10,6 +10,7 @@ import urllib.request
 import urllib.parse
 import http.cookiejar
 import json
+import http.client
 from datetime import datetime, timezone, timedelta
 import binascii
 
@@ -86,7 +87,7 @@ class Eneco:
             self.logprint(data)
             self.logprint()
             return data
-        raise Excepion("failed to connect to eneco")
+        raise Exception("failed to connect to eneco")
 
     def unescapestring(self, txt):
         return re.sub(r'\\x(\w\w)', lambda m:chr(int(m[1], 16)), txt)
@@ -234,7 +235,22 @@ see exhar/eu1static.oktacdn.com/assets/js/sdk/okta-signin-widget/6.4.3/js/okta-s
         return self.httpreq(f"{self.baseurl}/dxpweb/v2/nl/eneco/customers/{self.customerid}/accounts/{self.accountid}/products?includeproductrates=true")
     def getusage(self, start, per="Day", interval="Hour"):
         """
-        This will return a json dict with data for 7 days from 'start'
+This will return a json dict with data for 7 days from 'start'
+
+Allowed values for aggregation/interval
+      - h d w m y (i)
+    - - y - - - -
+    h - y - - - -
+    d - y y - - -
+    w - y y y - -
+    m - - y y y -
+    y - - y y y y
+    (a)
+
+
+
+
+        the top-level of the result dict looks like this:
 {
   "data": {
     "metadata": { "interval": "Hour", "aggregation": "Week" },
@@ -295,13 +311,16 @@ each measurement has this:
 }
         """
         q = dict(
-            aggregation = per,    # Day, Week, Month, Year
-            interval = interval,  # Hour, Day, Week, Month, Year
             start = start,        # yyyy-mm-dd
             addBudget = True,
             addWeather = True,
             extrapolate = False
         )
+        if per:
+            q["aggregation"] = per    # Day, Week, Month, Year
+        if interval:
+            q["interval"] = interval  # Hour, Day, Week, Month, Year
+
         return self.httpreq(f"{self.baseurl}/dxpweb/nl/eneco/customers/{self.customerid}/accounts/{self.accountid}/usages?"+urllib.parse.urlencode(q))
 
 def loadconfig(cfgfile):
@@ -343,8 +362,11 @@ def main():
     parser.add_argument('--since', '--from', type=str, help='get usage from', metavar='DATE')
     parser.add_argument('--until', type=str, help='get usage until, default=now', metavar='DATE')
     parser.add_argument('--weeks', '-w', type=int, default=0, help='hoeveel weken')
+    parser.add_argument('--stepsize', '-s', type=int, default=7, help='stepsize in days')
     parser.add_argument('--username', '-u', type=str, help=argparse.SUPPRESS)
     parser.add_argument('--password', '-p', type=str, help=argparse.SUPPRESS)
+    parser.add_argument('--aggregation', '-a', type=str, help="Day/Week/Month/Year", default="Week")
+    parser.add_argument('--interval', '-i', type=str, help="Hour/Day/Week/Month/Year", default="Hour")
     parser.add_argument('--config', help=argparse.SUPPRESS, default='~/.energierc') # 'specify configuration file.'
     args = parser.parse_args()
 
@@ -380,7 +402,7 @@ def main():
 
     t0 = None
     t1 = datetime.now()
-    td = timedelta(days=7)
+    td = timedelta(days=args.stepsize)
     if args.since:
         t0 = decode_datetime(args.since)
     if args.until:
@@ -398,7 +420,7 @@ def main():
         return
     t = t0
     while t < t1:
-        j = en.getusage("%d-%d-%d" % (t.year, t.month, t.day), "Week", "Hour")
+        j = en.getusage("%d-%d-%d" % (t.year, t.month, t.day), args.aggregation, args.interval)
         print(json.dumps(j))
         t += td
 
