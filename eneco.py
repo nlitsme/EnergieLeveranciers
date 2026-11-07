@@ -13,6 +13,177 @@ import json
 import http.client
 from datetime import datetime, timezone, timedelta
 import binascii
+from typing import Callable, Union
+
+
+JsonValue = Union[
+    str, int, float, bool, None, list['JsonValue'], dict[str, 'JsonValue']
+]
+JsonObject = dict[str, JsonValue]
+
+
+class AuthenticationError(Exception):
+    """An unsupported or unsuccessful Okta authentication step."""
+
+
+class IdxLogin:
+    # written by chatgpt
+    """Fill the advertised Okta IDX forms without hard-coded factor IDs."""
+
+    def __init__(
+        self, username: str, password: str, interactive: bool
+    ) -> None:
+        self.username = username
+        self.password = password
+        self.interactive = interactive
+        self.method = ''
+
+    @staticmethod
+    def object(value: JsonValue) -> JsonObject:
+        return value if isinstance(value, dict) else {}
+
+    @staticmethod
+    def objects(value: JsonValue) -> list[JsonObject]:
+        if not isinstance(value, list):
+            return []
+        return [item for item in value if isinstance(item, dict)]
+
+    def fields(self, form: JsonObject) -> list[JsonObject]:
+        return self.objects(form.get('value'))
+
+    def select_authenticator(self, field: JsonObject) -> JsonObject:
+        choices: dict[str, JsonObject] = {}
+        for option in self.objects(field.get('options')):
+            value = self.object(option.get('value'))
+            nested = self.object(value.get('form'))
+            selection = {
+                str(item['name']): item['value']
+                for item in self.fields(nested)
+                if isinstance(item.get('name'), str) and 'value' in item
+            }
+            method = selection.get('methodType')
+            if isinstance(method, str) and selection.get('id'):
+                choices[method] = selection
+        for method in ('password', 'email'):
+            if method in choices:
+                self.method = method
+                return choices[method]
+        raise AuthenticationError(
+            'No supported authenticator offered (expected Password or Email).'
+        )
+
+    def credentials(self, state: JsonObject) -> JsonObject:
+        current = self.object(
+            self.object(state.get('currentAuthenticator')).get('value')
+        )
+        method = current.get('type') or self.method
+        if method == 'password':
+            if not self.password:
+                raise AuthenticationError('A password is required.')
+            return {'passcode': self.password}
+        if method == 'email':
+            if not self.interactive:
+                raise AuthenticationError(
+                    'Email verification is required; rerun without '
+                    '--noninteractive to enter the code.'
+                )
+            try:
+                code = input('Eneco email verification code: ').strip()
+            except EOFError as error:
+                raise AuthenticationError('No email code was supplied.') from error
+            if not code:
+                raise AuthenticationError('The email code must not be empty.')
+            return {'passcode': code}
+        # Older password forms may have no currentAuthenticator metadata.
+        if not method and self.password:
+            return {'passcode': self.password}
+        raise AuthenticationError(f'Unsupported authenticator: {method!r}.')
+
+    def payload(self, form: JsonObject, state: JsonObject) -> JsonObject:
+        post: JsonObject = {}
+        for field in self.fields(form):
+            name = field.get('name')
+            if not isinstance(name, str):
+                raise AuthenticationError('Authentication field has no name.')
+            if name == 'authenticator' and 'options' in field:
+                post[name] = self.select_authenticator(field)
+            elif name == 'identifier':
+                if not self.username:
+                    raise AuthenticationError('A username is required.')
+                post[name] = self.username
+            elif name == 'credentials':
+                post[name] = self.credentials(state)
+            elif 'value' in field:
+                # Preserve server state and fixed values, including false/zero.
+                post[name] = field['value']
+            elif field.get('required'):
+                raise AuthenticationError(
+                    f'Unsupported required authentication field: {name}.'
+                )
+            # Optional fields without supplied values are deliberately omitted.
+        return post
+
+    def run(
+        self, state: JsonObject,
+        submit: Callable[[str, str], JsonObject],
+    ) -> JsonObject:
+        submitted: set[tuple[str, str, str]] = set()
+        steps: list[str] = []
+        for _ in range(20):
+            messages = self.objects(
+                self.object(state.get('messages')).get('value')
+            )
+            errors = [
+                str(item.get('message', 'Authentication rejected.'))
+                for item in messages if item.get('class') == 'ERROR'
+            ]
+            if errors:
+                raise AuthenticationError('; '.join(errors))
+            if self.object(state.get('success')).get('href'):
+                return state
+            forms = self.objects(
+                self.object(state.get('remediation')).get('value')
+            )
+            form = self.choose_form(forms)
+            href = form.get('href')
+            if not isinstance(href, str):
+                raise AuthenticationError('Authentication form has no URL.')
+            post = self.payload(form, state)
+            name = str(form.get('name'))
+            steps.append(name)
+            # State handles may rotate even when the same action is repeated.
+            # Keep credentials private and stop before submitting them twice.
+            action = {
+                key: value for key, value in post.items()
+                if key not in ('stateHandle', 'stateToken')
+            }
+            signature = (name, href, json.dumps(action, sort_keys=True))
+            if signature in submitted:
+                offered = ', '.join(str(item.get('name')) for item in forms)
+                raise AuthenticationError(
+                    f'Authentication repeated {name}; stopped before '
+                    f'resubmitting. Offered steps: {offered}. '
+                    f'Trace: {" -> ".join(steps)}'
+                )
+            submitted.add(signature)
+            state = submit(href, json.dumps(post))
+        raise AuthenticationError(
+            f'Authentication exceeded 20 steps. Trace: {" -> ".join(steps)}'
+        )
+
+    @staticmethod
+    def choose_form(forms: list[JsonObject]) -> JsonObject:
+        for name in (
+            'challenge-authenticator',
+            'select-authenticator-authenticate', 'identify',
+        ):
+            for form in forms:
+                if form.get('name') == name:
+                    return form
+        names = ', '.join(str(form.get('name')) for form in forms)
+        raise AuthenticationError(
+            f'Unsupported authentication step: {names or "no forms returned"}.'
+        )
 
 
 class Eneco:
@@ -167,29 +338,14 @@ see exhar/eu1static.oktacdn.com/assets/js/sdk/okta-signin-widget/6.4.3/js/okta-s
 
 
         state = self.httpreq("https://inloggen.eneco.nl/idp/idx/introspect", data=json.dumps({"stateToken":token}))
-        while True:
-            if 'success' in state:
-                break
-            if 'remediation' not in state:
-                break
-            values = state.get('remediation',{}).get('value', [])
-            for form in values:
-                if form.get('name') == "challenge-authenticator":
-                    break
-            post = {}
-            for v in form.get('value', []):
-                value = None
-                if 'value' in v:
-                    value = v.get('value')
-                else:
-                    match v.get('name'):
-                        case 'identifier': value = username
-                        case 'credentials': value = {"passcode":password}
-                if not value:
-                    print("could not determine", v)
-                    return
-                post[v.get('name')] = value
-            state = self.httpreq(form.get('href'), data=json.dumps(post))
+        flow = IdxLogin(username, password, not self.args.noninteractive)
+        try:
+            state = flow.run(
+                state, lambda url, body: self.httpreq(url, data=body)
+            )
+        except AuthenticationError as error:
+            print(f'Login failed: {error}')
+            return False
 
 
         # ...
